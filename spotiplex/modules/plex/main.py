@@ -8,6 +8,7 @@ from plexapi.playlist import Playlist  # Typing
 from plexapi.server import PlexServer
 
 from spotiplex.config import Config
+from spotiplex.modules.spotify.main import SpotifyPlaylist
 
 
 class PlexClass:
@@ -34,7 +35,10 @@ class PlexClass:
         matched_tracks: list[Track] = []
         missing_tracks = []
         total_tracks = len(spotify_tracks)
-        music_library = self.plex.library.section("Music")
+        
+        # TODO: this could be a list of libraries and the track search could
+        #       iterate over all the possible sources
+        music_library = self.plex.library.section(Config.PLEX_LIBRARY_NAME)
 
         for track_name, artist_name in spotify_tracks:
             artist_tracks_in_plex = music_library.search(title=artist_name)
@@ -69,6 +73,7 @@ class PlexClass:
                     f"Found artists for '{artist_name}' ({len(artist_tracks_in_plex)})",
                 )
                 logger.debug(f"Attempted to match song '{track_name}', but could not!")
+                # TODO: send missing tracks to external service
                 missing_tracks.append((track_name, artist_name))
 
             else:
@@ -98,37 +103,32 @@ class PlexClass:
 
     def create_playlist(
         self: "PlexClass",
-        playlist_name: str,
-        playlist_id: str,
+        playlist: SpotifyPlaylist,
         tracks: list[Track],
-        cover_url: str | None,
     ) -> Playlist | None:
         """Create a playlist in Plex with the given tracks."""
         now = datetime.datetime.now()
         try:
             iteration_tracks = tracks[:300]
-            del tracks[:300]  # Delete should be lower impact than sliciing
+            del tracks[:300]  # Delete should be lower impact than slicing
 
             new_playlist: Playlist = self.plex.createPlaylist(
-                playlist_name,
+                playlist.name,
                 items=iteration_tracks,
             )
             new_playlist.editSummary(
-                summary=f"""
-                Playlist autocreated with Spotiplex on {now.strftime('%m/%d/%Y')}.
-                Source is Spotify, Playlist ID: {playlist_id}
-                """,
+                summary=playlist.summary
             )
-            if cover_url is not None:
-                self.set_cover_art(new_playlist, cover_url)
+            if playlist.cover_url is not None:
+                self.set_cover_art(new_playlist, playlist.cover_url)
 
             while tracks:
                 iteration_tracks = tracks[:300]
-                del tracks[:300]  # Delete should be lower impact than sliciing
+                del tracks[:300]  # Delete should be lower impact than slicing
                 new_playlist.addItems(iteration_tracks)
 
         except Exception as e:
-            logger.debug(f"Error creating playlist {playlist_name}: {e}")
+            logger.debug(f"Error creating playlist {playlist.name}: {e}")
 
         else:
             return new_playlist
@@ -136,22 +136,18 @@ class PlexClass:
     def update_playlist(
         self: "PlexClass",
         existing_playlist: Playlist,
-        playlist_id: str,
+        playlist: SpotifyPlaylist,
         tracks: list,
-        cover_url: str | None,
     ) -> Playlist | None:
         """Update an existing playlist in Plex."""
-        now = datetime.datetime.now()
         if self.replacement_policy is not False and self.replacement_policy is not None:
             existing_playlist.delete()
             return self.create_playlist(
-                existing_playlist.title,
-                playlist_id,
+                playlist,
                 tracks,
-                cover_url,
             )
         existing_playlist.editSummary(
-            summary=f"Playlist updated by Spotiplex on  {now.strftime('%m/%d/%Y')},. Source is Spotify, Playlist ID: {playlist_id}",
+            summary=playlist.summary,
         )
         if len(tracks) > 0:
             existing_playlist.addItems(tracks)
@@ -163,27 +159,24 @@ class PlexClass:
             (
                 playlist
                 for playlist in self.plex.playlists()
-                if playlist_name in playlist.title
+                if playlist and playlist_name in playlist.title
             ),
             None,
         )
 
     def create_or_update_playlist(
         self: "PlexClass",
-        playlist_name: str,
-        playlist_id: str,
+        playlist: SpotifyPlaylist,
         tracks: list,
-        cover_url: str | None,
     ) -> Playlist | None:
         """Create or update a playlist in Plex."""
-        existing_playlist = self.find_playlist_by_name(playlist_name)
+        existing_playlist = self.find_playlist_by_name(playlist.name)
         if existing_playlist is not None and tracks:
             return self.update_playlist(
                 existing_playlist,
-                playlist_id,
+                playlist,
                 tracks,
-                cover_url,
             )
         if tracks:
-            return self.create_playlist(playlist_name, playlist_id, tracks, cover_url)
+            return self.create_playlist(playlist, tracks)
         return None

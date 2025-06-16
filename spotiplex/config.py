@@ -20,6 +20,7 @@ class Config:
         PLEX_API_KEY = os.environ.get("PLEX_API_KEY")
         PLEX_SERVER_URL = os.environ.get("PLEX_SERVER_URL")
         PLEX_REPLACE = os.environ.get("REPLACE")
+        PLEX_LIBRARY_NAME: str = os.environ.get("PLEX_LIBRARY_NAME", "Music")
 
         LIDARR_API_KEY: str = os.environ.get("LIDARR_API_KEY", "Not Set")
         LIDARR_API_URL: str = os.environ.get("LIDARR_API_URL", "Not Set")

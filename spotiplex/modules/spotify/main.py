@@ -1,3 +1,4 @@
+from typing import Optional
 import spotipy
 from loguru import logger
 from spotipy import Spotify
@@ -5,6 +6,11 @@ from spotipy.oauth2 import SpotifyClientCredentials
 
 from spotiplex.config import Config
 
+class SpotifyPlaylist:
+    name:str
+    summary:str
+    cover_url:Optional[str]
+    id:str
 
 class SpotifyClass:
     """Class for interacting with Spotify."""
@@ -13,7 +19,7 @@ class SpotifyClass:
         """Init for Spotify class."""
         self.spotify_id = Config.SPOTIFY_API_ID
         self.spotify_key = Config.SPOTIFY_API_KEY
-        self.sp = self.connect_spotify()
+        self.sp:Spotify = self.connect_spotify()
 
     def connect_spotify(self: "SpotifyClass") -> Spotify:
         """Init of spotify connection."""
@@ -42,27 +48,28 @@ class SpotifyClass:
         except Exception as e:
             logger.debug(f"Error fetching tracks from Spotify: {e}")
         return tracks
-
-    def get_playlist_name(self: "SpotifyClass", playlist_id: str) -> str | None:
-        """Fetch the name of a Spotify playlist."""
+    
+    def get_playlist_data(self: "SpotifyClass", playlist_id: str) -> Optional[SpotifyPlaylist]:
+        """Tries to get different aspects of the playlist, returns None if not found"""
         try:
-            return self.sp.playlist(playlist_id, fields=["name"])["name"]
+            playlist_data = self.sp.playlist(playlist_id, fields=["name","images","description"])
         except Exception as e:
-            logger.debug(
-                f"""
-                Error retrieving playlist name from Spotify for playlist {playlist_id}
-                """,
-            )
-            logger.debug(f"Error was {e}")
-            return None
-
-    def get_playlist_poster(self: "SpotifyClass", playlist_id: str) -> str | None:
-        """Tries to get cover art URL and returns None if not found."""
-        try:
-            playlist_data = self.sp.playlist(playlist_id, fields=["images"])
-        except Exception as e:
-            logger.error(f"Error retrieving cover art for playlist {playlist_id}: {e}")
-        if playlist_data and playlist_data["images"]:
-            cover_url: str = playlist_data["images"][0]["url"]
-            return cover_url
-        return None
+            logger.error(f"Error retrieving playlist data for playlist {playlist_id}: {e}")
+            playlist_data = None
+        result = SpotifyPlaylist()
+        result.id = playlist_id
+        if playlist_data:
+            if playlist_data["images"]:
+                result.cover_url = playlist_data["images"][0]["url"]
+            if playlist_data["name"]:
+                result.name = playlist_data["name"]
+            else:
+                logger.debug(
+                    f"Playlist name could not be retrieved for playlist ID '{playlist_id}'.",
+                )
+                return None
+            if playlist_data["description"]:
+                result.summary = playlist_data["description"]
+            else:
+                result.summary = ""
+        return result

@@ -81,30 +81,27 @@ class Spotiplex:
         """Process playlists, get data and create plex playlist."""
         try:
             playlist_id = self.extract_playlist_id(playlist)
-            playlist_name: str | None = self.spotify_service.get_playlist_name(
-                playlist_id,
-            )
+            spotify_playlist = self.spotify_service.get_playlist_data(playlist_id)
+            
 
-            if playlist_name:
+            if spotify_playlist:
+                playlist_name = spotify_playlist.name
                 if "Discover Weekly" in playlist_name or "Daily Mix" in playlist_name:
                     current_date = datetime.now().strftime("%B %d")
                     playlist_name = f"{playlist_name} {current_date}"
 
                 spotify_tracks = self.spotify_service.get_playlist_tracks(playlist_id)
-                cover_url = self.spotify_service.get_playlist_poster(playlist_id)
                 plex_tracks = self.plex_service.match_spotify_tracks_in_plex(
                     spotify_tracks,
                 )
                 self.plex_service.create_or_update_playlist(
-                    playlist_name,
-                    playlist_id,
+                    spotify_playlist,
                     plex_tracks,
-                    cover_url,
                 )
                 logger.debug(f"Processed playlist '{playlist_name}'.")
             else:
                 logger.debug(
-                    f"Playlist name could not be retrieved for playlist ID '{playlist_id}'.",
+                    f"Playlist could not be retrieved for playlist ID '{playlist_id}'.",
                 )
         except Exception as e:
             logger.debug(f"Error processing playlist '{playlist}': {e}")
