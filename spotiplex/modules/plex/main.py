@@ -8,7 +8,7 @@ from plexapi.playlist import Playlist  # Typing
 from plexapi.server import PlexServer
 
 from spotiplex.config import Config
-from spotiplex.modules.spotify.main import SpotifyPlaylist
+from spotiplex.modules.spotify.main import SpotifyPlaylist, SpotifyTrack
 
 
 class PlexClass:
@@ -28,53 +28,54 @@ class PlexClass:
 
     def match_spotify_tracks_in_plex(
         self: "PlexClass",
-        spotify_tracks: list[tuple[str, str]],
+        spotify_tracks: list[SpotifyTrack],
     ) -> list[Track]:
         """Match Spotify tracks in Plex library and provide a summary of the import."""
         logger.debug("Checking tracks in plex...")
         matched_tracks: list[Track] = []
-        missing_tracks = []
+        missing_tracks:list[SpotifyTrack] = []
         total_tracks = len(spotify_tracks)
         
         # TODO: this could be a list of libraries and the track search could
         #       iterate over all the possible sources
         music_library = self.plex.library.section(Config.PLEX_LIBRARY_NAME)
 
-        for track_name, artist_name in spotify_tracks:
-            artist_tracks_in_plex = music_library.search(title=artist_name)
+        for track in spotify_tracks:
+            # TODO: Add alternative searches
+            artist_tracks_in_plex = music_library.search(title=track.artists[0])
             if not artist_tracks_in_plex:
-                logger.debug(f"No results found for artist: {artist_name}")
-                missing_tracks.append((track_name, artist_name))
+                logger.debug(f"No results found for artist: {track.artists[0]}")
+                missing_tracks.append(track)
                 continue
 
             try:
                 plex_track = next(
                     (
-                        track.track(title=track_name)
+                        track.track(title=track.name)
                         for track in artist_tracks_in_plex
-                        if track.track(title=track_name)
+                        if track.track(title=track.name)
                     ),
                     None,
                 )
             except NotFound:
                 logger.debug(
-                    f"Track '{track_name}' by '{artist_name}' not found in Plex.",
+                    f"Track '{track.name}' by '{track.artists[0]}' not found in Plex. (Other artist of the track: {track.artists[1:]})",
                 )
                 plex_track = None
             except (Exception, BadRequest) as plex_search_exception:
                 logger.debug(
-                    f"Exception trying to search for artist '{artist_name}', track '{track_name}': {plex_search_exception}",
+                    f"Exception trying to search for artist '{track.artists[0]}', track '{track.name}': {plex_search_exception}",
                 )
                 plex_track = None
 
             if not plex_track:
                 logger.debug("Song not in Plex!")
                 logger.debug(
-                    f"Found artists for '{artist_name}' ({len(artist_tracks_in_plex)})",
+                    f"Found artists for '{track.artists[0]}' ({len(artist_tracks_in_plex)})",
                 )
-                logger.debug(f"Attempted to match song '{track_name}', but could not!")
+                logger.debug(f"Attempted to match song '{track.name}', but could not!")
                 # TODO: send missing tracks to external service
-                missing_tracks.append((track_name, artist_name))
+                missing_tracks.append(track)
 
             else:
                 matched_tracks.append(plex_track)

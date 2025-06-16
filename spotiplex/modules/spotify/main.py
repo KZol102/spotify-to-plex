@@ -12,6 +12,14 @@ class SpotifyPlaylist:
     cover_url:Optional[str]
     id:str
 
+class SpotifyTrack:
+    def __init__(self, id:str, artists:list[str], name:str, album:str, length:int):
+        self.id:str = id
+        self.artists:list[str]=artists
+        self.name:str=name
+        self.album:str=album
+        self.length:int=length #in milliseconds
+
 class SpotifyClass:
     """Class for interacting with Spotify."""
 
@@ -32,15 +40,24 @@ class SpotifyClass:
     def get_playlist_tracks(
         self: "SpotifyClass",
         playlist_id: str,
-    ) -> list[tuple[str, str]]:
+    ) -> list[SpotifyTrack]:
         """Fetch tracks from a Spotify playlist."""
-        tracks: list[tuple[str, str]] = []
+        tracks: list[SpotifyTrack] = []
         try:
-            results = self.sp.playlist_tracks(playlist_id)
+            results = self.sp.playlist_items(playlist_id,additional_types=("track"))
             while results:
                 tracks.extend(
                     [
-                        (item["track"]["name"], item["track"]["artists"][0]["name"])
+                        SpotifyTrack(
+                            id=item["track"]["id"],
+                            artists=[
+                                artist["name"]
+                                for artist in item["track"]["artists"]
+                            ],
+                            name=item["track"]["name"],
+                            album=item["track"]["album"]["name"],
+                            length=item["track"]["duration_ms"]
+                        )
                         for item in results["items"]
                     ],
                 )
