@@ -3,6 +3,7 @@ import spotipy
 from loguru import logger
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyClientCredentials
+import traceback
 
 from spotiplex.config import Config
 
@@ -63,29 +64,30 @@ class SpotifyClass:
                 )
                 results = self.sp.next(results) if results["next"] else None
         except Exception as e:
-            logger.debug(f"Error fetching tracks from Spotify: {e}")
+            logger.debug(f"Error fetching tracks from Spotify: {traceback.format_exc()}")
         return tracks
     
     def get_playlist_data(self: "SpotifyClass", playlist_id: str) -> Optional[SpotifyPlaylist]:
         """Tries to get different aspects of the playlist, returns None if not found"""
         try:
-            playlist_data = self.sp.playlist(playlist_id, fields=["name","images","description"])
+            playlist_data = self.sp.playlist(playlist_id)
         except Exception as e:
             logger.error(f"Error retrieving playlist data for playlist {playlist_id}: {e}")
             playlist_data = None
         result = SpotifyPlaylist()
         result.id = playlist_id
         if playlist_data:
-            if playlist_data["images"]:
+            logger.debug(f"Spotify playlist data result: {playlist_data}")
+            if "images" in playlist_data:
                 result.cover_url = playlist_data["images"][0]["url"]
-            if playlist_data["name"]:
+            if "name" in playlist_data:
                 result.name = playlist_data["name"]
             else:
                 logger.debug(
                     f"Playlist name could not be retrieved for playlist ID '{playlist_id}'.",
                 )
                 return None
-            if playlist_data["description"]:
+            if "description" in playlist_data:
                 result.summary = playlist_data["description"]
             else:
                 result.summary = ""

@@ -9,6 +9,7 @@ from spotiplex.config import (
 from spotiplex.modules.lidarr.main import LidarrClass
 from spotiplex.modules.plex.main import PlexClass
 from spotiplex.modules.spotify.main import SpotifyClass
+import traceback
 
 
 class Spotiplex:
@@ -104,7 +105,7 @@ class Spotiplex:
                     f"Playlist could not be retrieved for playlist ID '{playlist_id}'.",
                 )
         except Exception as e:
-            logger.debug(f"Error processing playlist '{playlist}': {e}")
+            logger.error(f"Error processing playlist '{playlist}': {traceback.format_exc()}")
 
     @staticmethod
     def extract_playlist_id(playlist_url: str) -> str:

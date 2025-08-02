@@ -13,7 +13,7 @@ class Config:
     """Generic Config class to pull environment vars."""
 
     if os.environ.get("DOCKER"):
-        SPOTIPLEX_VERSION = os.environ.get("COMMIT_SHA")
+        SPOTIPLEX_VERSION = os.environ.get("COMMIT_SHA", "Unknown")
         SPOTIFY_API_KEY = os.environ.get("SPOTIFY_API_KEY")
         SPOTIFY_API_ID = os.environ.get("SPOTIFY_API_ID")
 
@@ -32,6 +32,7 @@ class Config:
         LIDARR_SYNC = os.environ.get("LIDARR_SYNC", "false")
         FIRST_RUN = os.environ.get("FIRST_RUN", "False")
     else:
+        SPOTIPLEX_VERSION = os.environ.get("COMMIT_SHA", "Unknown")
         spotify_config = read_config("spotify")
         plex_config = read_config("plex")
         lidarr_config = read_config("lidarr")

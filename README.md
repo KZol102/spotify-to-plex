@@ -55,3 +55,25 @@ Using [python-plexapi](https://github.com/pkkid/python-plexapi), [spotipy](https
 ## Disclaimer
 
 I am not responsible for how you utilize this script, nor am I responsible for your usage of the Spotify API, in or outside of conjunction with this script. Please read the Spotify TOS and Spotify Developer TOS carefully. This script is neither endorsed nor supported by Spotify. All uses of this script are at your own risk. Please buy the music you enjoy.
+
+## Config
+
+| Variable                  | Description                                            | Default                       | Required                         |
+| :------------------------ | :----------------------------------------------------- | :---------------------------- | :------------------------------- |
+| `SPOTIFY_CLIENT_ID`       | Spotify Client ID                                      | -                             | Yes                              |
+| `SPOTIFY_CLIENT_SECRET`   | Spotify Client Secret                                  | -                             | Yes                              |
+| `PLEX_TOKEN`              | Plex authentication token                              | -                             | Yes                              |
+| `PLEX_SERVER_URL`         | URL of your Plex server                                | -                             | Yes                              |
+| `PLEX_REPLACE`            | Replace existing playlists                             | `false`                       | No                               |
+| `PLEX_USERS`              | Comma-separated Plex users                             | Owner account                 | No                               |
+| `PLEX_LIBRARY_NAME`       | Name of Plex Music Library                             | `Music`                       | No                               |
+| `MANUAL_PLAYLISTS`        | Comma-separated Spotify playlist IDs                   | -                             | Only if `LIDARR_SYNC=false`      |
+| `LIDARR_API_KEY`          | Lidarr API key                                         | -                             | Only if `LIDARR_SYNC=true`       |
+| `LIDARR_API_URL`          | Lidarr server URL                                      | -                             | Only if `LIDARR_SYNC=true`       |
+| `LIDARR_SYNC`             | Enable Lidarr sync                                     | `false`                       | No                               |
+| `MAX_PARALLEL_PLAYLISTS`  | Maximum number of playlists to process in parallel     | `3`                           | No                               |
+| `FIRST_RUN`               | Run sync at container start                            | `false`                       | No                               |
+| `CRON_SCHEDULE`           | Schedule using cron syntax                             | `0 1 * * *`                   | No                               |
+| `ENABLE_CACHE`            | Enable API response caching                            | `true`                        | No                               |
+| `CACHE_TTL`               | Cache time-to-live in seconds                          | `3600`                        | No                               |
+| `CACHE_DIR`               | Custom cache directory path                            | `~/.cache/spotify-to-plex`    | No                               |

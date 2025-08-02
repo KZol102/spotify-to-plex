@@ -1,7 +1,7 @@
 FROM python:latest
 
 # Set environment variables
-ENV SRC_DIR /usr/bin/spotiplex/
+ENV SRC_DIR=/usr/bin/spotiplex/
 ENV POETRY_VERSION=1.7.1
 ENV PYTHONUNBUFFERED=1
 ENV CRON_SCHEDULE=@daily
